@@ -80,11 +80,15 @@ RUN rm -f /docker-entrypoint.d/20-inject-env.sh && \
     echo '#!/bin/sh' > /docker-entrypoint.d/10-setup-env.sh && \
     echo '# Set default DOMAIN_SERVER if not provided' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'export DOMAIN_SERVER="${DOMAIN_SERVER:-http://localhost:3080}"' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo '# Extract backend hostname from DOMAIN_SERVER for SSL and Host header' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'BACKEND_HOST=$(echo "$DOMAIN_SERVER" | sed -E "s|^https?://([^:/]+).*|\\1|")' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'export BACKEND_HOST="${BACKEND_HOST:-localhost}"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo '# Ensure PORT is set (Railway provides this, default to 80)' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'export PORT="${PORT:-80}"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "=== Frontend Startup Verification ==="' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "PORT=$PORT"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "DOMAIN_SERVER=$DOMAIN_SERVER"' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'echo "BACKEND_HOST=$BACKEND_HOST"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "Checking static files..."' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'ls -la /usr/share/nginx/html/ | head -10' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'test -f /usr/share/nginx/html/index.html && echo "✓ index.html found" || echo "✗ index.html MISSING!"' >> /docker-entrypoint.d/10-setup-env.sh && \
