@@ -78,22 +78,31 @@ COPY --from=data-provider-build /app/packages/data-provider/dist ./packages/data
 COPY --from=data-schemas-build /app/packages/data-schemas/dist ./packages/data-schemas/dist
 COPY --from=api-package-build /app/packages/api/dist ./packages/api/dist
 COPY --from=client-build /app/client/dist ./client/dist
-# Prune dev dependencies but keep production deps (including nested dependencies)
+# Prune dev dependencies but keep production deps
 RUN npm prune --production
-# Install @smithy packages at root level (required by @librechat/agents nested deps)
-# Must install AFTER prune to ensure they're not removed
-RUN npm install --production --no-save @smithy/protocol-http@^4.0.0 @smithy/signature-v4@^2.0.10
-# Install @smithy/protocol-http directly in @langchain/community's node_modules
-# This is critical because Node.js module resolution from nested node_modules
-# will look in the local node_modules directory first
-RUN if [ -d "/app/node_modules/@librechat/agents/node_modules/@langchain/community" ]; then \
-      cd /app/node_modules/@librechat/agents/node_modules/@langchain/community && \
-      (npm install --production --no-save @smithy/protocol-http@^4.0.0 2>&1 || \
-       (mkdir -p node_modules/@smithy && \
-        cp -r /app/node_modules/@smithy/protocol-http node_modules/@smithy/ && \
-        echo "Installed @smithy/protocol-http via copy")); \
+
+# Install required Smithy packages at root AFTER prune for reliable resolution
+RUN npm install --production --no-save \
+      @smithy/protocol-http@^4.0.0 \
+      @smithy/signature-v4@^2.0.10 \
+    || echo "Warning: failed to install @smithy packages at root (continuing)"
+
+# Ensure @smithy/protocol-http is also directly available at the nested path used by LangChain Bedrock
+# Path: /app/node_modules/@librechat/agents/node_modules/@langchain/community/node_modules/@smithy/protocol-http
+RUN set -e; \
+    NESTED_DIR="/app/node_modules/@librechat/agents/node_modules/@langchain/community/node_modules/@smithy"; \
+    mkdir -p "$NESTED_DIR"; \
+    if [ -d "/app/node_modules/@smithy/protocol-http" ]; then \
+      # Prefer a symlink; fall back to copy if symlink not supported in layer
+      ln -sf \
+        /app/node_modules/@smithy/protocol-http \
+        "$NESTED_DIR/protocol-http" 2>/dev/null \
+      || cp -r \
+        /app/node_modules/@smithy/protocol-http \
+        "$NESTED_DIR/" 2>/dev/null \
+      || echo "Warning: could not link or copy @smithy/protocol-http to nested path (continuing)"; \
     else \
-      echo "Warning: @langchain/community directory not found"; \
+      echo "Warning: root @smithy/protocol-http not found; nested placement skipped"; \
     fi
 WORKDIR /app/api
 EXPOSE 3080
