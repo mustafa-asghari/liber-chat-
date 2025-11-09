@@ -1,7 +1,7 @@
 {
-  "installCommand": "npm ci --ignore-scripts",
-  "buildCommand": "node scripts/build-vercel.js",
-  "outputDirectory": "client/dist",
+  "installCommand": "cd .. && npm ci --ignore-scripts",
+  "buildCommand": "node build-vercel.cjs",
+  "outputDirectory": "dist",
   "framework": null
 }
 
