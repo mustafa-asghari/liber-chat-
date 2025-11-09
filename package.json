@@ -94,6 +94,10 @@
     "url": "https://github.com/danny-avila/LibreChat/issues"
   },
   "homepage": "https://librechat.ai/",
+  "dependencies": {
+    "@smithy/protocol-http": "^4.0.0",
+    "@smithy/signature-v4": "^2.0.10"
+  },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.1",
     "@eslint/compat": "^1.2.6",
@@ -134,6 +138,8 @@
     "axios": "1.12.1",
     "elliptic": "^6.6.1",
     "form-data": "^4.0.4",
+    "@smithy/protocol-http": "^4.0.0",
+    "@smithy/signature-v4": "^2.0.10",
     "mdast-util-gfm-autolink-literal": "2.0.0",
     "remark-gfm": {
       "mdast-util-gfm-autolink-literal": "2.0.0"
