@@ -22,12 +22,15 @@ COPY --chown=node:node packages/client/package.json ./packages/client/package.js
 
 USER node
 
-# Install dependencies
+# Install dependencies (including dev dependencies needed for build)
 RUN npm config set legacy-peer-deps true && \
     npm install --no-audit --legacy-peer-deps
 
 # Copy source code
 COPY --chown=node:node . .
+
+# Reinstall to ensure workspace dependencies are properly linked after source copy
+RUN npm install --no-audit --legacy-peer-deps
 
 # Build frontend
 RUN npm run build:data-provider && \
