@@ -34,7 +34,9 @@ RUN \
     npm config set fetch-retry-maxtimeout 600000 ; \
     npm config set fetch-retries 5 ; \
     npm config set fetch-retry-mintimeout 15000 ; \
-    npm ci --no-audit
+    # Relax peer dependency resolution to avoid ERESOLVE with smithy/langchain
+    npm config set legacy-peer-deps true ; \
+    npm install --no-audit --legacy-peer-deps
 
 COPY --chown=node:node . .
 
@@ -42,8 +44,16 @@ RUN \
     # React client build
     NODE_OPTIONS="--max-old-space-size=2048" npm run frontend; \
     npm prune --production --ignore-scripts; \
-    # Ensure @smithy/signature-v4 is not pruned (required by @librechat/agents)
-    npm install --production --no-save @smithy/signature-v4@^2.0.10 || true; \
+    # Ensure @smithy packages are present post-prune (required by Bedrock via LangChain)
+    npm install --production --no-save @smithy/signature-v4@^2.0.10 @smithy/protocol-http@^5.0.1 || true; \
+    # Also place @smithy/protocol-http at nested path used by @langchain/community as a fallback
+    NESTED_DIR="/app/node_modules/@librechat/agents/node_modules/@langchain/community/node_modules/@smithy"; \
+    mkdir -p "$NESTED_DIR"; \
+    if [ -d "/app/node_modules/@smithy/protocol-http" ]; then \
+      ln -sf /app/node_modules/@smithy/protocol-http "$NESTED_DIR/protocol-http" 2>/dev/null \
+      || cp -r /app/node_modules/@smithy/protocol-http "$NESTED_DIR/" 2>/dev/null \
+      || true; \
+    fi; \
     npm cache clean --force
 
 # Node API setup
