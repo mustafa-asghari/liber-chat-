@@ -38,12 +38,19 @@ RUN npm run build:data-provider && \
     npm run build:api && \
     npm run build:client-package
 
-# Ensure peer dependencies are installed after workspace packages are built
-# This is critical for packages/client which has lucide-react as a peer dependency
+# Ensure all dependencies including peer dependencies are installed
+# Reinstall from root to ensure workspace dependencies are properly resolved
 RUN npm install --no-audit --legacy-peer-deps
 
-# Verify lucide-react is available before building client
-RUN test -d /app/node_modules/lucide-react || (echo "ERROR: lucide-react not found in node_modules!" && ls -la /app/node_modules/ | grep lucide && exit 1)
+# Verify lucide-react is available (it's in client/package.json dependencies)
+# If missing, install it explicitly
+RUN if [ ! -d /app/node_modules/lucide-react ]; then \
+      echo "lucide-react not found, installing explicitly..."; \
+      npm install --no-save --legacy-peer-deps lucide-react@^0.394.0; \
+    fi
+
+# Final verification
+RUN test -d /app/node_modules/lucide-react || (echo "FATAL: lucide-react still not found!" && npm list lucide-react 2>&1 && npm list --all | grep lucide && exit 1)
 
 # Build the main client
 # Note: The build script runs from root, so we stay in /app
