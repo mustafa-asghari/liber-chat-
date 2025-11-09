@@ -45,7 +45,7 @@ RUN \
     NODE_OPTIONS="--max-old-space-size=2048" npm run frontend; \
     npm prune --omit=dev --ignore-scripts --workspaces --include-workspace-root; \
     # Ensure @smithy packages are present post-prune (required by Bedrock via LangChain)
-    npm install --production --no-save @smithy/signature-v4@^2.0.10 @smithy/protocol-http@^5.0.1 winston-daily-rotate-file@^5.0.0 || true; \
+    npm install --production --no-save @smithy/signature-v4@^2.0.10 @smithy/protocol-http@^5.0.1 @smithy/eventstream-codec@^4.2.4 winston-daily-rotate-file@^5.0.0 || true; \
     # Also place @smithy/protocol-http at nested path used by @langchain/community as a fallback
     NESTED_DIR="/app/node_modules/@librechat/agents/node_modules/@langchain/community/node_modules/@smithy"; \
     mkdir -p "$NESTED_DIR"; \
