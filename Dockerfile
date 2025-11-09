@@ -41,7 +41,9 @@ COPY --chown=node:node . .
 RUN \
     # React client build
     NODE_OPTIONS="--max-old-space-size=2048" npm run frontend; \
-    npm prune --production; \
+    npm prune --production --ignore-scripts; \
+    # Ensure @smithy/signature-v4 is not pruned (required by @librechat/agents)
+    npm install --production --no-save @smithy/signature-v4@^2.0.10 || true; \
     npm cache clean --force
 
 # Node API setup
