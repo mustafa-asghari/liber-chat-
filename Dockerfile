@@ -27,6 +27,9 @@ COPY --chown=node:node packages/data-schemas/package.json ./packages/data-schema
 COPY --chown=node:node packages/api/package.json ./packages/api/package.json
 COPY --chown=node:node librechat.yaml ./librechat.yaml
 
+ENV CONFIG_PATH=/app/librechat.yaml
+ENV SERVE_CLIENT=false
+
 RUN \
     # Allow mounting of these files, which have no default
     touch .env ; \
