@@ -4,10 +4,13 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-WORKDIR /app
-
 # Install dependencies
 RUN apk add --no-cache python3 py3-pip
+
+# Create app directory and set ownership
+RUN mkdir -p /app && chown -R node:node /app
+
+WORKDIR /app
 
 # Copy package files
 COPY --chown=node:node package.json package-lock.json ./
