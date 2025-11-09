@@ -33,6 +33,10 @@ COPY --chown=node:node . .
 # First, reinstall dependencies to ensure workspace linking (like Vercel's npm ci)
 RUN npm install --no-audit --legacy-peer-deps
 
+# Ensure lucide-react is installed (peer dependency of @librechat/client)
+# Vercel handles this automatically, but we need to ensure it's available for Vite
+RUN npm install --no-save --legacy-peer-deps lucide-react@^0.394.0 || true
+
 # Build using the same process as Vercel (build-vercel.cjs)
 # This builds packages in the exact same order: data-provider -> data-schemas -> api -> client-package -> client
 RUN node client/build-vercel.cjs

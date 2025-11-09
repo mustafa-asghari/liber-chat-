@@ -258,6 +258,7 @@ export default defineConfig(({ command }) => ({
       $fonts: path.resolve(__dirname, 'public/fonts'),
       'micromark-extension-math': 'micromark-extension-llm-math',
     },
+    dedupe: ['lucide-react'], // Ensure lucide-react is resolved from root node_modules, not workspace package
   },
 }));
 
