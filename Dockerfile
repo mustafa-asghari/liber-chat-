@@ -61,21 +61,20 @@ RUN \
     test -d /app/packages/data-schemas/dist && test -d /app/packages/data-provider/dist && test -d /app/packages/api/dist || (echo "ERROR: Workspace packages not built!" && exit 1); \
     # Prune dev dependencies (don't use --workspaces flag to preserve workspace packages)
     npm prune --omit=dev --ignore-scripts; \
-    # Restore workspace package symlinks that were removed by prune
-    # Create @librechat directory if it doesn't exist
+    # Copy workspace packages to node_modules (more reliable than symlinks in Docker)
     mkdir -p /app/node_modules/@librechat; \
-    # Restore symlinks for workspace packages
-    if [ ! -L /app/node_modules/@librechat/data-schemas ]; then \
-      ln -sf /app/packages/data-schemas /app/node_modules/@librechat/data-schemas; \
-    fi; \
-    if [ ! -L /app/node_modules/@librechat/data-provider ]; then \
-      ln -sf /app/packages/data-provider /app/node_modules/@librechat/data-provider; \
-    fi; \
-    if [ ! -L /app/node_modules/@librechat/api ]; then \
-      ln -sf /app/packages/api /app/node_modules/@librechat/api; \
-    fi; \
+    # Copy package.json and dist folders for each workspace package
+    mkdir -p /app/node_modules/@librechat/data-schemas; \
+    cp /app/packages/data-schemas/package.json /app/node_modules/@librechat/data-schemas/; \
+    cp -r /app/packages/data-schemas/dist /app/node_modules/@librechat/data-schemas/; \
+    mkdir -p /app/node_modules/@librechat/data-provider; \
+    cp /app/packages/data-provider/package.json /app/node_modules/@librechat/data-provider/; \
+    cp -r /app/packages/data-provider/dist /app/node_modules/@librechat/data-provider/; \
+    mkdir -p /app/node_modules/@librechat/api; \
+    cp /app/packages/api/package.json /app/node_modules/@librechat/api/; \
+    cp -r /app/packages/api/dist /app/node_modules/@librechat/api/; \
     # Verify workspace packages are accessible via node_modules after prune
-    test -f /app/node_modules/@librechat/data-schemas/dist/index.cjs || (echo "ERROR: Workspace package symlinks not restored!" && exit 1); \
+    test -f /app/node_modules/@librechat/data-schemas/dist/index.cjs || (echo "ERROR: Cannot access data-schemas/dist/index.cjs!" && ls -la /app/node_modules/@librechat/data-schemas/ && exit 1); \
     # Ensure @smithy packages are present post-prune (required by Bedrock via LangChain)
     npm install --production --no-save @smithy/signature-v4@^2.0.10 @smithy/protocol-http@^5.0.1 @smithy/eventstream-codec@^4.2.4 winston-daily-rotate-file@^5.0.0 || true; \
     # Also place @smithy/protocol-http at nested path used by @langchain/community as a fallback
