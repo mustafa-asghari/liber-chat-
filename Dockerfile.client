@@ -32,12 +32,22 @@ COPY --chown=node:node . .
 # Reinstall to ensure workspace dependencies are properly linked after source copy
 RUN npm install --no-audit --legacy-peer-deps
 
-# Build frontend
+# Build workspace packages first
 RUN npm run build:data-provider && \
     npm run build:data-schemas && \
     npm run build:api && \
-    npm run build:client-package && \
-    NODE_OPTIONS="--max-old-space-size=2048" npm run build:client
+    npm run build:client-package
+
+# Ensure peer dependencies are installed after workspace packages are built
+# This is critical for packages/client which has lucide-react as a peer dependency
+RUN npm install --no-audit --legacy-peer-deps
+
+# Verify lucide-react is available before building client
+RUN test -d /app/node_modules/lucide-react || (echo "ERROR: lucide-react not found in node_modules!" && ls -la /app/node_modules/ | grep lucide && exit 1)
+
+# Build the main client
+# Note: The build script runs from root, so we stay in /app
+RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build:client
 
 # Production stage - nginx
 FROM nginx:stable-alpine
