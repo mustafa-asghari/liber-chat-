@@ -141,3 +141,11 @@ helm/**/.values.yaml
 /.tabnine/
 /.codeium
 *.local.md
+
+# Documentation files created for deployment setup
+ENVIRONMENT_SETUP.md
+RAILWAY_ENV_SETUP.md
+SECURE_CONFIG_SETUP.md
+VERCEL_RAILWAY_SETUP.md
+RAILWAY_BACKEND_DEPLOYMENT.md
+DEPLOYMENT_QUICK_START.md
