@@ -1,6 +1,6 @@
 {
   "installCommand": "npm ci --ignore-scripts",
-  "buildCommand": "npm run build -w packages/data-provider && npm run build -w packages/data-schemas && npm run build -w packages/api && npm run build -w packages/client && npm run build -w client",
+  "buildCommand": "(cd packages/data-provider && npm run build) && (cd packages/data-schemas && npm run build) && (cd packages/api && npm run build) && (cd packages/client && npm run build) && (cd client && npm run build)",
   "outputDirectory": "client/dist",
   "framework": null
 }
