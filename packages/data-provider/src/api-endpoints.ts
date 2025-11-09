@@ -7,24 +7,11 @@ if (
   typeof process === 'undefined' ||
   (process as typeof process & { browser?: boolean }).browser === true
 ) {
-  // Check for DOMAIN_SERVER environment variable first (for separate frontend/backend deployments)
-  // This is available in Vite builds via envPrefix: ['DOMAIN_']
-  // Access import.meta.env safely (Vite replaces this at build time)
-  try {
-    // @ts-expect-error - import.meta is Vite-specific, available at build time
-    const env = import.meta.env;
-    if (env && env.DOMAIN_SERVER) {
-      BASE_URL = env.DOMAIN_SERVER;
-    } else {
-      // Fall back to <base> element in the HTML document, if it exists
-      const baseEl = document.querySelector('base');
-      BASE_URL = baseEl?.getAttribute('href') || '/';
-    }
-  } catch {
-    // Fall back to <base> element if import.meta is not available
-    const baseEl = document.querySelector('base');
-    BASE_URL = baseEl?.getAttribute('href') || '/';
-  }
+  // This is to ensure that the BASE_URL is set correctly based on the <base>
+  // element in the HTML document, if it exists.
+  // For Railway deployments with nginx, the base tag will be '/' and nginx handles API proxying
+  const baseEl = document.querySelector('base');
+  BASE_URL = baseEl?.getAttribute('href') || '/';
 }
 
 if (BASE_URL && BASE_URL.endsWith('/')) {
