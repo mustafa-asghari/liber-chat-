@@ -70,19 +70,21 @@ COPY --from=builder /app/client/dist /usr/share/nginx/html
 RUN test -f /usr/share/nginx/html/index.html || (echo "ERROR: index.html not found in dist!" && ls -la /usr/share/nginx/html/ && exit 1)
 
 # Copy Railway nginx config template
+# nginx:alpine automatically processes templates in /etc/nginx/templates/ using envsubst
+# It will replace ${DOMAIN_SERVER} with the environment variable value
 COPY client/nginx.railway.conf /etc/nginx/templates/default.conf.template
 
-# Create a script to inject DOMAIN_SERVER into nginx config at runtime
-# This allows the frontend to proxy API requests to the backend
-# Use envsubst to replace ${DOMAIN_SERVER} with the actual value
-# Default to localhost if not set (for local testing)
-RUN echo '#!/bin/sh' > /docker-entrypoint.d/20-inject-env.sh && \
-    echo 'export DOMAIN_SERVER="${DOMAIN_SERVER:-http://localhost:3080}"' >> /docker-entrypoint.d/20-inject-env.sh && \
-    echo 'echo "Generating nginx config with DOMAIN_SERVER=$DOMAIN_SERVER"' >> /docker-entrypoint.d/20-inject-env.sh && \
-    echo 'envsubst '"'"'$DOMAIN_SERVER'"'"' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.d/20-inject-env.sh && \
-    echo 'echo "Nginx config generated successfully"' >> /docker-entrypoint.d/20-inject-env.sh && \
-    echo 'cat /etc/nginx/conf.d/default.conf | grep -A 2 "location /api/"' >> /docker-entrypoint.d/20-inject-env.sh && \
-    chmod +x /docker-entrypoint.d/20-inject-env.sh
+# Create a startup script to set default DOMAIN_SERVER and verify configuration
+# This runs before nginx processes templates, so the default value will be used
+RUN echo '#!/bin/sh' > /docker-entrypoint.d/10-setup-env.sh && \
+    echo '# Set default DOMAIN_SERVER if not provided' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'export DOMAIN_SERVER="${DOMAIN_SERVER:-http://localhost:3080}"' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'echo "=== Frontend Startup Verification ==="' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'echo "DOMAIN_SERVER=$DOMAIN_SERVER"' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'echo "Checking static files..."' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'ls -la /usr/share/nginx/html/ | head -10' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'test -f /usr/share/nginx/html/index.html && echo "✓ index.html found" || echo "✗ index.html MISSING!"' >> /docker-entrypoint.d/10-setup-env.sh && \
+    chmod +x /docker-entrypoint.d/10-setup-env.sh
 
 EXPOSE 80
 
