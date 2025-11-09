@@ -80,7 +80,10 @@ RUN rm -f /docker-entrypoint.d/20-inject-env.sh && \
     echo '#!/bin/sh' > /docker-entrypoint.d/10-setup-env.sh && \
     echo '# Set default DOMAIN_SERVER if not provided' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'export DOMAIN_SERVER="${DOMAIN_SERVER:-http://localhost:3080}"' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo '# Ensure PORT is set (Railway provides this, default to 80)' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'export PORT="${PORT:-80}"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "=== Frontend Startup Verification ==="' >> /docker-entrypoint.d/10-setup-env.sh && \
+    echo 'echo "PORT=$PORT"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "DOMAIN_SERVER=$DOMAIN_SERVER"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "Checking static files..."' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'ls -la /usr/share/nginx/html/ | head -10' >> /docker-entrypoint.d/10-setup-env.sh && \
@@ -94,6 +97,8 @@ RUN echo '#!/bin/sh' > /docker-entrypoint.d/25-verify-nginx.sh && \
     echo '  echo "✓ Nginx config file exists"' >> /docker-entrypoint.d/25-verify-nginx.sh && \
     echo '  echo "Testing nginx config syntax..."' >> /docker-entrypoint.d/25-verify-nginx.sh && \
     echo '  nginx -t 2>&1 || echo "✗ Nginx config test failed"' >> /docker-entrypoint.d/25-verify-nginx.sh && \
+    echo '  echo "--- Listening port ---"' >> /docker-entrypoint.d/25-verify-nginx.sh && \
+    echo '  grep "listen" /etc/nginx/conf.d/default.conf | head -2' >> /docker-entrypoint.d/25-verify-nginx.sh && \
     echo '  echo "--- Proxy configuration ---"' >> /docker-entrypoint.d/25-verify-nginx.sh && \
     echo '  grep -A 3 "location /api/" /etc/nginx/conf.d/default.conf | head -4' >> /docker-entrypoint.d/25-verify-nginx.sh && \
     echo 'else' >> /docker-entrypoint.d/25-verify-nginx.sh && \
