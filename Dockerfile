@@ -45,14 +45,24 @@ RUN \
 COPY --chown=node:node . .
 
 RUN \
-    # React client build (may fail if frontend deps missing, that's OK)
+    # Build workspace packages first (required for runtime) - these MUST succeed
+    npm run build:data-provider && \
+    npm run build:data-schemas && \
+    npm run build:api && \
+    npm run build:client-package && \
+    # React client build (may fail if frontend deps missing, that's OK for API-only)
     mkdir -p /app/client/dist; \
-    NODE_OPTIONS="--max-old-space-size=2048" npm run frontend || true; \
+    (NODE_OPTIONS="--max-old-space-size=2048" npm run build:client || true); \
     # Ensure fallback index.html exists (required by server even if SERVE_CLIENT=false)
     if [ ! -f /app/client/dist/index.html ]; then \
       printf '<!doctype html><html><head><meta charset="utf-8"><title>LibreChat API</title></head><body><h1>LibreChat API</h1><p>Frontend is hosted separately.</p></body></html>' >/app/client/dist/index.html; \
     fi; \
-    npm prune --omit=dev --ignore-scripts --workspaces --include-workspace-root; \
+    # Verify workspace packages' dist folders exist before pruning
+    test -d /app/packages/data-schemas/dist && test -d /app/packages/data-provider/dist && test -d /app/packages/api/dist || (echo "ERROR: Workspace packages not built!" && exit 1); \
+    # Prune dev dependencies (don't use --workspaces flag to preserve workspace packages)
+    npm prune --omit=dev --ignore-scripts; \
+    # Verify workspace packages still exist after prune
+    test -d /app/packages/data-schemas/dist && test -d /app/packages/data-provider/dist && test -d /app/packages/api/dist || (echo "ERROR: Workspace packages removed by prune!" && exit 1); \
     # Ensure @smithy packages are present post-prune (required by Bedrock via LangChain)
     npm install --production --no-save @smithy/signature-v4@^2.0.10 @smithy/protocol-http@^5.0.1 @smithy/eventstream-codec@^4.2.4 winston-daily-rotate-file@^5.0.0 || true; \
     # Also place @smithy/protocol-http at nested path used by @langchain/community as a fallback
