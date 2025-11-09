@@ -43,7 +43,7 @@ COPY --chown=node:node . .
 RUN \
     # React client build
     NODE_OPTIONS="--max-old-space-size=2048" npm run frontend; \
-    npm prune --production --ignore-scripts; \
+    npm prune --omit=dev --ignore-scripts --workspaces --include-workspace-root; \
     # Ensure @smithy packages are present post-prune (required by Bedrock via LangChain)
     npm install --production --no-save @smithy/signature-v4@^2.0.10 @smithy/protocol-http@^5.0.1 || true; \
     # Also place @smithy/protocol-http at nested path used by @langchain/community as a fallback
