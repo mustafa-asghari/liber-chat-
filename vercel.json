@@ -1,6 +1,6 @@
 {
   "installCommand": "npm ci --ignore-scripts",
-  "buildCommand": "npm run build:data-provider && npm run build:data-schemas && npm run build:api && npm run build:client-package && npm run build:client",
+  "buildCommand": "bash build-vercel.sh",
   "outputDirectory": "client/dist",
   "framework": null
 }

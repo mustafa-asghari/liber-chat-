@@ -1,24 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 # Ensure we're in the project root
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+cd "$(dirname "$0")"
 
+# Use npm workspace commands from root to explicitly target each workspace
+# This avoids npm workspace resolution issues
 echo "Building data-provider..."
-cd packages/data-provider && npm run build && cd "$SCRIPT_DIR"
+npm run build -w packages/data-provider
 
 echo "Building data-schemas..."
-cd packages/data-schemas && npm run build && cd "$SCRIPT_DIR"
+npm run build -w packages/data-schemas
 
 echo "Building api..."
-cd packages/api && npm run build && cd "$SCRIPT_DIR"
+npm run build -w packages/api
 
 echo "Building client-package..."
-cd packages/client && npm run build && cd "$SCRIPT_DIR"
+npm run build -w packages/client
 
 echo "Building client (frontend)..."
-cd client && npm run build && cd "$SCRIPT_DIR"
+npm run build -w client
 
 echo "Build completed successfully!"
 
