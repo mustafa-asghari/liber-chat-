@@ -58,6 +58,10 @@ RUN \
       || cp -r /app/node_modules/@smithy/protocol-http "$NESTED_DIR/" 2>/dev/null \
       || true; \
     fi; \
+    mkdir -p /app/client/dist; \
+    if [ ! -f /app/client/dist/index.html ]; then \
+      printf '<!doctype html><html><head><meta charset="utf-8"><title>LibreChat API</title></head><body><h1>LibreChat API</h1><p>Frontend is hosted separately.</p></body></html>' >/app/client/dist/index.html; \
+    fi; \
     npm cache clean --force
 
 # Node API setup
