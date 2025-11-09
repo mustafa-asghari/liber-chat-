@@ -67,7 +67,6 @@ bower_components/
 .flooignore
 
 #config file
-librechat.yaml
 librechat.yml
 config/librechat.railway.yaml
 config/librechat.*.yaml
