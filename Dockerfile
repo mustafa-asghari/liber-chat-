@@ -64,17 +64,22 @@ RUN \
     # Copy workspace packages to node_modules (more reliable than symlinks in Docker)
     mkdir -p /app/node_modules/@librechat; \
     # Copy package.json and dist folders for each workspace package
+    echo "Copying workspace packages to node_modules..."; \
     mkdir -p /app/node_modules/@librechat/data-schemas; \
-    cp /app/packages/data-schemas/package.json /app/node_modules/@librechat/data-schemas/; \
-    cp -r /app/packages/data-schemas/dist /app/node_modules/@librechat/data-schemas/; \
+    cp /app/packages/data-schemas/package.json /app/node_modules/@librechat/data-schemas/ || (echo "ERROR: Failed to copy data-schemas package.json" && exit 1); \
+    cp -r /app/packages/data-schemas/dist /app/node_modules/@librechat/data-schemas/ || (echo "ERROR: Failed to copy data-schemas dist" && exit 1); \
     mkdir -p /app/node_modules/@librechat/data-provider; \
-    cp /app/packages/data-provider/package.json /app/node_modules/@librechat/data-provider/; \
-    cp -r /app/packages/data-provider/dist /app/node_modules/@librechat/data-provider/; \
+    cp /app/packages/data-provider/package.json /app/node_modules/@librechat/data-provider/ || (echo "ERROR: Failed to copy data-provider package.json" && exit 1); \
+    cp -r /app/packages/data-provider/dist /app/node_modules/@librechat/data-provider/ || (echo "ERROR: Failed to copy data-provider dist" && exit 1); \
     mkdir -p /app/node_modules/@librechat/api; \
-    cp /app/packages/api/package.json /app/node_modules/@librechat/api/; \
-    cp -r /app/packages/api/dist /app/node_modules/@librechat/api/; \
-    # Verify workspace packages are accessible via node_modules after prune
-    test -f /app/node_modules/@librechat/data-schemas/dist/index.cjs || (echo "ERROR: Cannot access data-schemas/dist/index.cjs!" && ls -la /app/node_modules/@librechat/data-schemas/ && exit 1); \
+    cp /app/packages/api/package.json /app/node_modules/@librechat/api/ || (echo "ERROR: Failed to copy api package.json" && exit 1); \
+    cp -r /app/packages/api/dist /app/node_modules/@librechat/api/ || (echo "ERROR: Failed to copy api dist" && exit 1); \
+    # Verify workspace packages are accessible via node_modules after copy
+    echo "Verifying copied packages..."; \
+    test -f /app/node_modules/@librechat/data-schemas/dist/index.cjs || (echo "ERROR: Cannot access data-schemas/dist/index.cjs!" && ls -la /app/node_modules/@librechat/ && ls -la /app/node_modules/@librechat/data-schemas/ && exit 1); \
+    test -d /app/node_modules/@librechat/data-provider/dist || (echo "ERROR: data-provider dist not found!" && exit 1); \
+    test -d /app/node_modules/@librechat/api/dist || (echo "ERROR: api dist not found!" && exit 1); \
+    echo "Workspace packages copied successfully!"; \
     # Ensure @smithy packages are present post-prune (required by Bedrock via LangChain)
     npm install --production --no-save @smithy/signature-v4@^2.0.10 @smithy/protocol-http@^5.0.1 @smithy/eventstream-codec@^4.2.4 winston-daily-rotate-file@^5.0.0 || true; \
     # Also place @smithy/protocol-http at nested path used by @langchain/community as a fallback
@@ -85,6 +90,12 @@ RUN \
       || cp -r /app/node_modules/@smithy/protocol-http "$NESTED_DIR/" 2>/dev/null \
       || true; \
     fi; \
+    # Final verification: ensure workspace packages still exist after all npm operations
+    echo "Final verification of workspace packages..."; \
+    test -f /app/node_modules/@librechat/data-schemas/dist/index.cjs || (echo "FATAL: data-schemas/dist/index.cjs missing after all operations!" && ls -la /app/node_modules/@librechat/ && exit 1); \
+    test -d /app/node_modules/@librechat/data-provider/dist || (echo "FATAL: data-provider dist missing!" && exit 1); \
+    test -d /app/node_modules/@librechat/api/dist || (echo "FATAL: api dist missing!" && exit 1); \
+    echo "All workspace packages verified successfully!"; \
     npm cache clean --force
 
 # Node API setup
