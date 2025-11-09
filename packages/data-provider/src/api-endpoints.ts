@@ -9,10 +9,19 @@ if (
 ) {
   // Check for DOMAIN_SERVER environment variable first (for separate frontend/backend deployments)
   // This is available in Vite builds via envPrefix: ['DOMAIN_']
-  if (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.DOMAIN_SERVER) {
-    BASE_URL = import.meta.env.DOMAIN_SERVER;
-  } else {
-    // Fall back to <base> element in the HTML document, if it exists
+  // Access import.meta.env safely (Vite replaces this at build time)
+  try {
+    // @ts-expect-error - import.meta is Vite-specific, available at build time
+    const env = import.meta.env;
+    if (env && env.DOMAIN_SERVER) {
+      BASE_URL = env.DOMAIN_SERVER;
+    } else {
+      // Fall back to <base> element in the HTML document, if it exists
+      const baseEl = document.querySelector('base');
+      BASE_URL = baseEl?.getAttribute('href') || '/';
+    }
+  } catch {
+    // Fall back to <base> element if import.meta is not available
     const baseEl = document.querySelector('base');
     BASE_URL = baseEl?.getAttribute('href') || '/';
   }
