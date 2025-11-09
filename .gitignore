@@ -69,6 +69,9 @@ bower_components/
 #config file
 librechat.yaml
 librechat.yml
+config/librechat.railway.yaml
+config/librechat.*.yaml
+!config/librechat.example.yaml
 
 # Environment
 .npmrc

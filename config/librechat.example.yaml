@@ -11,7 +11,9 @@ endpoints:
   # Defines custom AI model endpoints
   custom:
     - name: "caloriesai"
-      # Use environment variables - set CALORIESAI_API_KEY and CALORIESAI_BASE_URL in Railway
+      # Use environment variables for sensitive values
+      # Set these in Railway: CALORIESAI_API_KEY and CALORIESAI_BASE_URL
+      # DO NOT put actual values here - use environment variables only
       apiKey: "${CALORIESAI_API_KEY}"
       baseURL: "${CALORIESAI_BASE_URL}"
       models:
@@ -19,7 +21,7 @@ endpoints:
           - "gpt-4o-mini"
           - "gpt-4o"
           - "gpt-4-turbo"
-        fetch: false  # Disable fetch to avoid timeout issues - use default models instead
+        fetch: false
       dropParams:
         - "response_format"
         - "logprobs"
@@ -31,7 +33,6 @@ endpoints:
         - "stop"
         - "n"
       modelDisplayLabel: "CaloriesAI"
-      # Disable auto title to avoid extra calls
       titleConvo: false
       titleModel: "gpt-4o-mini"
 
@@ -42,8 +43,9 @@ modelSpecs:
       label: "CaloriesAI Default"
       group: "caloriesai"
       preset:
-        endpoint: "caloriesai"  # Must match the custom endpoint name exactly
+        endpoint: "caloriesai"
         model: "gpt-4o-mini"
 
 memory:
   disabled: true
+
