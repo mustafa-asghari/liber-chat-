@@ -71,15 +71,30 @@ WORKDIR /app
 # Copy all source files and built packages
 COPY api ./api
 COPY config ./config
+# Update package.json files to ensure @smithy/protocol-http is in dependencies
+COPY api/package.json ./api/package.json
+COPY package.json ./package.json
 COPY --from=data-provider-build /app/packages/data-provider/dist ./packages/data-provider/dist
 COPY --from=data-schemas-build /app/packages/data-schemas/dist ./packages/data-schemas/dist
 COPY --from=api-package-build /app/packages/api/dist ./packages/api/dist
 COPY --from=client-build /app/client/dist ./client/dist
 # Prune dev dependencies but keep production deps (including nested dependencies)
 RUN npm prune --production
-# Ensure @smithy packages are installed at root (required by @librechat/agents nested deps)
-# This ensures Node.js can resolve them from nested node_modules
-RUN cd /app && npm install --production --no-save @smithy/protocol-http@^4.0.0 @smithy/signature-v4@^2.0.10
+# Install @smithy packages at root level (required by @librechat/agents nested deps)
+# Must install AFTER prune to ensure they're not removed
+RUN npm install --production --no-save @smithy/protocol-http@^4.0.0 @smithy/signature-v4@^2.0.10
+# Install @smithy/protocol-http directly in @langchain/community's node_modules
+# This is critical because Node.js module resolution from nested node_modules
+# will look in the local node_modules directory first
+RUN if [ -d "/app/node_modules/@librechat/agents/node_modules/@langchain/community" ]; then \
+      cd /app/node_modules/@librechat/agents/node_modules/@langchain/community && \
+      (npm install --production --no-save @smithy/protocol-http@^4.0.0 2>&1 || \
+       (mkdir -p node_modules/@smithy && \
+        cp -r /app/node_modules/@smithy/protocol-http node_modules/@smithy/ && \
+        echo "Installed @smithy/protocol-http via copy")); \
+    else \
+      echo "Warning: @langchain/community directory not found"; \
+    fi
 WORKDIR /app/api
 EXPOSE 3080
 ENV HOST=0.0.0.0
