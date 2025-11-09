@@ -29,32 +29,13 @@ RUN npm config set legacy-peer-deps true && \
 # Copy source code
 COPY --chown=node:node . .
 
-# Reinstall to ensure workspace dependencies are properly linked after source copy
+# Use the same build process as Vercel
+# First, reinstall dependencies to ensure workspace linking (like Vercel's npm ci)
 RUN npm install --no-audit --legacy-peer-deps
 
-# Build workspace packages first
-RUN npm run build:data-provider && \
-    npm run build:data-schemas && \
-    npm run build:api && \
-    npm run build:client-package
-
-# Ensure all dependencies including peer dependencies are installed
-# Reinstall from root to ensure workspace dependencies are properly resolved
-RUN npm install --no-audit --legacy-peer-deps
-
-# Verify lucide-react is available (it's in client/package.json dependencies)
-# If missing, install it explicitly
-RUN if [ ! -d /app/node_modules/lucide-react ]; then \
-      echo "lucide-react not found, installing explicitly..."; \
-      npm install --no-save --legacy-peer-deps lucide-react@^0.394.0; \
-    fi
-
-# Final verification
-RUN test -d /app/node_modules/lucide-react || (echo "FATAL: lucide-react still not found!" && npm list lucide-react 2>&1 && npm list --all | grep lucide && exit 1)
-
-# Build the main client
-# Note: The build script runs from root, so we stay in /app
-RUN NODE_OPTIONS="--max-old-space-size=2048" npm run build:client
+# Build using the same process as Vercel (build-vercel.cjs)
+# This builds packages in the exact same order: data-provider -> data-schemas -> api -> client-package -> client
+RUN node client/build-vercel.cjs
 
 # Production stage - nginx
 FROM nginx:stable-alpine
