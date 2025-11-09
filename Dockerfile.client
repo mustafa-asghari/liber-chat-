@@ -33,12 +33,27 @@ COPY --chown=node:node . .
 # First, reinstall dependencies to ensure workspace linking (like Vercel's npm ci)
 RUN npm install --no-audit --legacy-peer-deps
 
-# Ensure peer dependencies of @librechat/client are installed
-# Vercel handles this automatically, but we need to ensure they're available for Vite
-# These are peer dependencies that Rollup marks as external but Vite needs to resolve
+# Ensure peer dependencies are installed
+# npm workspaces should install peer dependencies automatically, but we verify they're there
+# Install any missing peer dependencies that Rollup marked as external
 RUN npm install --no-save --legacy-peer-deps \
     lucide-react@^0.394.0 \
     dompurify@^3.2.6 \
+    @react-spring/web@^10.0.1 \
+    @ariakit/react@^0.4.16 \
+    @ariakit/react-core@^0.4.17 \
+    @dicebear/collection@^9.2.2 \
+    @dicebear/core@^9.2.2 \
+    class-variance-authority@^0.7.1 \
+    clsx@^2.1.1 \
+    input-otp@^1.4.2 \
+    jotai@^2.12.5 \
+    match-sorter@^8.1.0 \
+    rc-input-number@^7.4.2 \
+    react-hook-form@^7.56.4 \
+    react-resizable-panels@^3.0.2 \
+    react-textarea-autosize@^8.4.0 \
+    tailwind-merge@^1.9.1 \
     || true
 
 # Build using the same process as Vercel (build-vercel.cjs)
