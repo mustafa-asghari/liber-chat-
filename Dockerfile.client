@@ -74,9 +74,10 @@ RUN test -f /usr/share/nginx/html/index.html || (echo "ERROR: index.html not fou
 # It will replace ${DOMAIN_SERVER} with the environment variable value
 COPY client/nginx.railway.conf /etc/nginx/templates/default.conf.template
 
-# Create a startup script to set default DOMAIN_SERVER and verify configuration
-# This runs before nginx processes templates, so the default value will be used
-RUN echo '#!/bin/sh' > /docker-entrypoint.d/10-setup-env.sh && \
+# Remove any old conflicting scripts and create our setup script
+# This runs BEFORE the built-in 20-envsubst-on-templates.sh script
+RUN rm -f /docker-entrypoint.d/20-inject-env.sh && \
+    echo '#!/bin/sh' > /docker-entrypoint.d/10-setup-env.sh && \
     echo '# Set default DOMAIN_SERVER if not provided' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'export DOMAIN_SERVER="${DOMAIN_SERVER:-http://localhost:3080}"' >> /docker-entrypoint.d/10-setup-env.sh && \
     echo 'echo "=== Frontend Startup Verification ==="' >> /docker-entrypoint.d/10-setup-env.sh && \
