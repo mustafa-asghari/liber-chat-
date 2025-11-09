@@ -3,8 +3,13 @@
 
 # Base for all builds
 FROM node:20-alpine AS base-min
-# Install jemalloc
-RUN apk add --no-cache jemalloc
+# Install jemalloc and build tools required for native modules (e.g., sharp)
+RUN apk add --no-cache \
+    jemalloc \
+    python3 \
+    make \
+    g++ \
+    libc6-compat
 # Set environment variable to use jemalloc
 ENV LD_PRELOAD=/usr/lib/libjemalloc.so.2
 WORKDIR /app
