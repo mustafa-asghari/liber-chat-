@@ -66,16 +66,22 @@ FROM nginx:stable-alpine
 # Copy built frontend
 COPY --from=builder /app/client/dist /usr/share/nginx/html
 
-# Copy Railway nginx config
-COPY client/nginx.railway.conf /etc/nginx/conf.d/default.conf
+# Verify that index.html exists
+RUN test -f /usr/share/nginx/html/index.html || (echo "ERROR: index.html not found in dist!" && ls -la /usr/share/nginx/html/ && exit 1)
+
+# Copy Railway nginx config template
+COPY client/nginx.railway.conf /etc/nginx/templates/default.conf.template
 
 # Create a script to inject DOMAIN_SERVER into nginx config at runtime
 # This allows the frontend to proxy API requests to the backend
+# Use envsubst to replace ${DOMAIN_SERVER} with the actual value
+# Default to localhost if not set (for local testing)
 RUN echo '#!/bin/sh' > /docker-entrypoint.d/20-inject-env.sh && \
-    echo 'if [ -n "$DOMAIN_SERVER" ]; then' >> /docker-entrypoint.d/20-inject-env.sh && \
-    echo '  # Replace api:3080 with the actual backend URL' >> /docker-entrypoint.d/20-inject-env.sh && \
-    echo '  sed -i "s|http://api:3080|$DOMAIN_SERVER|g" /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.d/20-inject-env.sh && \
-    echo 'fi' >> /docker-entrypoint.d/20-inject-env.sh && \
+    echo 'export DOMAIN_SERVER="${DOMAIN_SERVER:-http://localhost:3080}"' >> /docker-entrypoint.d/20-inject-env.sh && \
+    echo 'echo "Generating nginx config with DOMAIN_SERVER=$DOMAIN_SERVER"' >> /docker-entrypoint.d/20-inject-env.sh && \
+    echo 'envsubst '"'"'$DOMAIN_SERVER'"'"' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf' >> /docker-entrypoint.d/20-inject-env.sh && \
+    echo 'echo "Nginx config generated successfully"' >> /docker-entrypoint.d/20-inject-env.sh && \
+    echo 'cat /etc/nginx/conf.d/default.conf | grep -A 2 "location /api/"' >> /docker-entrypoint.d/20-inject-env.sh && \
     chmod +x /docker-entrypoint.d/20-inject-env.sh
 
 EXPOSE 80
