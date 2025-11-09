@@ -7,11 +7,15 @@ if (
   typeof process === 'undefined' ||
   (process as typeof process & { browser?: boolean }).browser === true
 ) {
-  // process is only available in node context, or process.browser is true in client-side code
-  // This is to ensure that the BASE_URL is set correctly based on the <base>
-  // element in the HTML document, if it exists.
-  const baseEl = document.querySelector('base');
-  BASE_URL = baseEl?.getAttribute('href') || '/';
+  // Check for DOMAIN_SERVER environment variable first (for separate frontend/backend deployments)
+  // This is available in Vite builds via envPrefix: ['DOMAIN_']
+  if (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.DOMAIN_SERVER) {
+    BASE_URL = import.meta.env.DOMAIN_SERVER;
+  } else {
+    // Fall back to <base> element in the HTML document, if it exists
+    const baseEl = document.querySelector('base');
+    BASE_URL = baseEl?.getAttribute('href') || '/';
+  }
 }
 
 if (BASE_URL && BASE_URL.endsWith('/')) {
