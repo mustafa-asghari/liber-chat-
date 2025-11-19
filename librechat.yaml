@@ -14,14 +14,14 @@ interface:
   modelSelect: true
   presets: true
   agents: false
+  sidePanel: false  # Disable right side panel
 
 endpoints:
   # Defines custom AI model endpoints
   custom:
     - name: "caloriesai"
-      # Use environment variables - set CALORIESAI_API_KEY and CALORIESAI_BASE_URL in Railway
-      apiKey: "${CALORIESAI_API_KEY}"
-      baseURL: "${CALORIESAI_BASE_URL}"
+      apiKey: "dummy"  # Required field - your app accepts "dummy" or any value
+      baseURL: "https://caloriesaiproject-production.up.railway.app/v1"
       models:
         default:
           - "gpt-4o-mini"
